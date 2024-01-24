@@ -2,62 +2,106 @@ import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
+import axios from 'axios';
 
 const API_KEY = "41829655-bf270f19af5dfab9e341d37e3";
 
 const cardContainer = document.querySelector(".card-container");
 const searchForm = document.querySelector(".search-form");
 const loader = document.querySelector(".loader");
+const fetchMoreBtn = document.querySelector(".btn-more-primary");
 
 searchForm.addEventListener("submit", handleSearch);
+fetchMoreBtn.addEventListener("click", fetchMorePhotos);
 
 const lightbox = new SimpleLightbox(".card-container a", {
   captionsData: "alt",
   captionDelay: 250,
 });
 
-function handleSearch(event) {
-    event.preventDefault();
-  
-    const form = event.currentTarget;
-    const query = form.elements.query.value;
-  
-    if(!query.trim()) {
-        return;
-    }
-    
-    clearGallery()
-    showLoader();
-  
-      fetchPhotos(query)
-        .then(renderPhotos)
-        .catch(onFetchError)
-        .finally(() => {
-          form.reset();
-          hideLoader();
-        });
+let page = 1;
+let limit = 40;
+let totalPages = 1;
+let lastQuery = "";
+let endMessage = null;
+
+fetchMoreBtn.style.display = "none";
+
+async function handleSearch(event) {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const query = form.elements.query.value;
+
+  if (!query.trim()) {
+    return;
   }
 
-function fetchPhotos(query) {
-  const url = `https://pixabay.com/api/?key=${API_KEY}&q=${query}&image_type=photo&orientation=horizontal&safesearch=true`;
+  clearGallery();
+  showLoader();
 
-  return fetch(url).then((response) => {
-    if (!response.ok) {
-      throw new Error(response.statusText);
+  try {
+    const data = await fetchPhotos(query, page, limit);
+    renderPhotos(data);
+
+    totalPages = Math.ceil(100 / limit);
+    page = 1;
+    lastQuery = query;
+
+    if (data.hits.length === 0) {
+      fetchMoreBtn.style.display = "none";
+      
+    } else {
+      fetchMoreBtn.style.display = "block";
     }
-    return response.json();
-  });
+  } catch (error) {
+    onFetchError(error);
+  } finally {
+    form.reset();
+    hideLoader();
+  }
+}
+
+async function fetchMorePhotos() {
+  
+  if (page > totalPages) {
+    return;
+  }
+  showLoader();
+  try {
+    const data = await fetchPhotos(lastQuery, page, limit);
+    renderPhotos(data);
+    page += 1;
+
+    if (page > totalPages) {
+      fetchMoreBtn.style.display = "none";
+      showEndMessage();
+    }
+  } catch (error) {
+    console.log(error);
+  } finally {
+    hideLoader();
+  }
+}
+
+async function fetchPhotos(query, page, limit) {
+  const url = `https://pixabay.com/api/?key=${API_KEY}&q=${query}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=${limit}`;
+
+  try {
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to fetch photos'); 
+  }
 }
 
 function renderPhotos(data) {
   const photos = data.hits || [];
 
-  
   if (photos.length === 0) {
     onFetchError(new Error("No images found."));
     return;
   }
-  
 
   const markup = photos
     .map(
@@ -84,16 +128,21 @@ function renderPhotos(data) {
     )
     .join("");
 
-  cardContainer.innerHTML = markup;
+  cardContainer.innerHTML += markup;
   lightbox.refresh();
 }
 
 function onFetchError(error) {
+
   iziToast.show({
-    ...iziToastConfig,
+    position: 'topRight',
+    messageColor: '#FFF',
+    messageSize: "16px",
+    close: false,
     backgroundColor: '#EF4040',
     message: "Sorry, there are no images matching your search query. Please try again!",
   });
+  
 }
 
 function clearGallery() {
@@ -101,18 +150,17 @@ function clearGallery() {
 }
 
 function showLoader() {
-  loader.classList.add("visible"); 
+  loader.classList.add("visible");
 }
 
 function hideLoader() {
-  loader.classList.remove("visible"); 
+  loader.classList.remove("visible");
 }
 
-
-const iziToastConfig = {
-    position: 'topRight',
-    messageColor: '#FFF',
-    messageSize: "16px",
-    close: false,
+function showEndMessage() {
+    endMessage = iziToast.error({
+      position: "topRight",
+      message: "We're sorry, but you've reached the end of search results."
+    });
+  
 }
-
