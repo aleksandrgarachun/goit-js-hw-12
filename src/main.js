@@ -14,11 +14,6 @@ const fetchMoreBtn = document.querySelector(".btn-more-primary");
 searchForm.addEventListener("submit", handleSearch);
 fetchMoreBtn.addEventListener("click", fetchMorePhotos);
 
-const lightbox = new SimpleLightbox(".card-container a", {
-  captionsData: "alt",
-  captionDelay: 250,
-});
-
 let page = 1;
 let limit = 40;
 let totalPages = 1;
@@ -28,9 +23,13 @@ let cardHeight = 0;
 
 fetchMoreBtn.style.display = "none";
 
+const lightbox = new SimpleLightbox(".card-container a", {
+  captionsData: "alt",
+  captionDelay: 250,
+});
+
 function measureCardHeight() {
   const firstCard = document.querySelector('.gallery-item');
-  
   if (firstCard) {
     const cardRect = firstCard.getBoundingClientRect();
     cardHeight = cardRect.height;
@@ -46,8 +45,9 @@ async function fetchMorePhotos() {
   if (page > totalPages) {
     return;
   }
-
+  
   showLoader();
+  //lightbox.refresh();
   try {
     const data = await fetchPhotos(lastQuery, page, limit);
     renderPhotos(data);
@@ -60,10 +60,13 @@ async function fetchMorePhotos() {
     }
   } catch (error) {
     console.log(error);
+    
   } finally {
     hideLoader();
-    scrollToNextGroup(); 
+    scrollToNextGroup();
+    lightbox.refresh(); 
   }
+  
 }
 
 function scrollToNextGroup() {
@@ -82,7 +85,7 @@ async function handleSearch(event) {
   if (!query.trim()) {
     return;
   }
-
+  
   clearGallery();
   showLoader();
 
@@ -93,20 +96,22 @@ async function handleSearch(event) {
     totalPages = Math.ceil(100 / limit);
     page = 1;
     lastQuery = query;
+    
+    
 
     if (data.hits.length === 0) {
       fetchMoreBtn.style.display = "none";
-      
     } else {
       fetchMoreBtn.style.display = "block";
     }
-
+    
     afterRender();
   } catch (error) {
     onFetchError(error);
   } finally {
     form.reset();
     hideLoader();
+    lightbox.refresh(); 
   }
 }
 
@@ -117,7 +122,7 @@ async function fetchPhotos(query, page, limit) {
     const response = await axios.get(url);
     return response.data;
   } catch (error) {
-    throw new Error('Failed to fetch photos'); 
+    throw new Error('Failed to fetch photos');
   }
 }
 
@@ -155,10 +160,10 @@ function renderPhotos(data) {
     .join("");
 
   cardContainer.innerHTML += markup;
+  lightbox.refresh();
 }
 
 function onFetchError(error) {
-
   iziToast.show({
     position: 'topRight',
     messageColor: '#FFF',
@@ -167,7 +172,6 @@ function onFetchError(error) {
     backgroundColor: '#EF4040',
     message: "Sorry, there are no images matching your search query. Please try again!",
   });
-  
 }
 
 function clearGallery() {
@@ -183,9 +187,10 @@ function hideLoader() {
 }
 
 function showEndMessage() {
-    endMessage = iziToast.error({
-      position: "topRight",
-      message: "We're sorry, but you've reached the end of search results."
-    });
-  
+  endMessage = iziToast.error({
+    position: "topRight",
+    message: "We're sorry, but you've reached the end of search results."
+  });
 }
+
+
