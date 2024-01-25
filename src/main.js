@@ -24,8 +24,54 @@ let limit = 40;
 let totalPages = 1;
 let lastQuery = "";
 let endMessage = null;
+let cardHeight = 0;
 
 fetchMoreBtn.style.display = "none";
+
+function measureCardHeight() {
+  const firstCard = document.querySelector('.gallery-item');
+  
+  if (firstCard) {
+    const cardRect = firstCard.getBoundingClientRect();
+    cardHeight = cardRect.height;
+  }
+}
+
+function afterRender() {
+  lightbox.refresh();
+  measureCardHeight();
+}
+
+async function fetchMorePhotos() {
+  if (page > totalPages) {
+    return;
+  }
+
+  showLoader();
+  try {
+    const data = await fetchPhotos(lastQuery, page, limit);
+    renderPhotos(data);
+    page += 1;
+
+    if (page > totalPages) {
+      fetchMoreBtn.style.display = "none";
+      showEndMessage();
+      
+    }
+  } catch (error) {
+    console.log(error);
+  } finally {
+    hideLoader();
+    scrollToNextGroup(); 
+  }
+}
+
+function scrollToNextGroup() {
+  window.scrollBy({
+    top: 2 * cardHeight,
+    behavior: 'smooth',
+  });
+}
 
 async function handleSearch(event) {
   event.preventDefault();
@@ -54,32 +100,12 @@ async function handleSearch(event) {
     } else {
       fetchMoreBtn.style.display = "block";
     }
+
+    afterRender();
   } catch (error) {
     onFetchError(error);
   } finally {
     form.reset();
-    hideLoader();
-  }
-}
-
-async function fetchMorePhotos() {
-  
-  if (page > totalPages) {
-    return;
-  }
-  showLoader();
-  try {
-    const data = await fetchPhotos(lastQuery, page, limit);
-    renderPhotos(data);
-    page += 1;
-
-    if (page > totalPages) {
-      fetchMoreBtn.style.display = "none";
-      showEndMessage();
-    }
-  } catch (error) {
-    console.log(error);
-  } finally {
     hideLoader();
   }
 }
@@ -129,7 +155,6 @@ function renderPhotos(data) {
     .join("");
 
   cardContainer.innerHTML += markup;
-  lightbox.refresh();
 }
 
 function onFetchError(error) {
