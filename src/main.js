@@ -47,26 +47,23 @@ async function fetchMorePhotos() {
   }
   
   showLoader();
-  //lightbox.refresh();
+  
   try {
+    page += 1;
     const data = await fetchPhotos(lastQuery, page, limit);
     renderPhotos(data);
-    page += 1;
-
-    if (page > totalPages) {
+    if (page >= totalPages) {
       fetchMoreBtn.style.display = "none";
       showEndMessage();
-      
     }
+    afterRender();
   } catch (error) {
     console.log(error);
-    
   } finally {
     hideLoader();
     scrollToNextGroup();
-    lightbox.refresh(); 
+    lightbox.refresh();
   }
-  
 }
 
 function scrollToNextGroup() {
@@ -92,19 +89,14 @@ async function handleSearch(event) {
   try {
     const data = await fetchPhotos(query, page, limit);
     renderPhotos(data);
-
     totalPages = Math.ceil(100 / limit);
     page = 1;
     lastQuery = query;
-    
-    
-
     if (data.hits.length === 0) {
       fetchMoreBtn.style.display = "none";
     } else {
       fetchMoreBtn.style.display = "block";
     }
-    
     afterRender();
   } catch (error) {
     onFetchError(error);
