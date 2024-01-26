@@ -179,8 +179,14 @@ function hideLoader() {
 }
 
 function showEndMessage() {
-  endMessage = iziToast.error({
+  endMessage = iziToast.show({
+    class: 'error-svg',
     position: "topRight",
+    icon: 'error-svg',
+    messageColor: '#FFF',
+    messageSize: "16px",
+    close: false,
+    backgroundColor: '#EF4040',
     message: "We're sorry, but you've reached the end of search results."
   });
 }

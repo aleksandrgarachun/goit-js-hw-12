@@ -118,6 +118,9 @@
 .gallery-image {
   width: 360px;
   height: 200px;
+  object-fit: cover;
+  overflow: hidden;
+
 }
 
 .comments {
@@ -143,4 +146,26 @@
   border-radius: 4px;
   border: 1px solid #000;
 
+}
+.btn-more-primary{
+  width: 125px;
+  height: 40px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #4E75FF;
+  color: #FFF;
+  font-family: "Montserrat", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  margin: 32px auto;
+}
+
+.btn-more-primary:hover {
+  border-radius: 8px;
+  background: #6C8CFF;
+}
+.error-svg {
+  background-image: url(../img/error.svg);
 }
