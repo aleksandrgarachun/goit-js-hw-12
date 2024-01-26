@@ -47,7 +47,8 @@ async function fetchMorePhotos() {
   }
   
   showLoader();
-  
+  fetchMoreBtn.disabled = true; 
+
   try {
     page += 1;
     const data = await fetchPhotos(lastQuery, page, limit);
@@ -61,8 +62,8 @@ async function fetchMorePhotos() {
     console.log(error);
   } finally {
     hideLoader();
+    fetchMoreBtn.disabled = false; 
     scrollToNextGroup();
-    lightbox.refresh();
   }
 }
 
@@ -85,11 +86,12 @@ async function handleSearch(event) {
   
   clearGallery();
   showLoader();
+  fetchMoreBtn.disabled = true; 
 
   try {
     const data = await fetchPhotos(query, page, limit);
     renderPhotos(data);
-    totalPages = Math.ceil(100 / limit);
+    totalPages = Math.ceil(data.totalHits / limit); 
     page = 1;
     lastQuery = query;
     if (data.hits.length === 0) {
@@ -103,9 +105,10 @@ async function handleSearch(event) {
   } finally {
     form.reset();
     hideLoader();
-    lightbox.refresh(); 
+    fetchMoreBtn.disabled = false; 
   }
 }
+
 
 async function fetchPhotos(query, page, limit) {
   const url = `https://pixabay.com/api/?key=${API_KEY}&q=${query}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=${limit}`;
