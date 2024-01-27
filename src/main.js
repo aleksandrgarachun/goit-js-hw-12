@@ -47,10 +47,10 @@ async function fetchMorePhotos() {
   }
   
   showLoader();
-  fetchMoreBtn.disabled = true; 
 
   try {
     page += 1;
+    fetchMoreBtn.disabled = true; 
     const data = await fetchPhotos(lastQuery, page, limit);
     renderPhotos(data);
     if (page >= totalPages) {
@@ -89,15 +89,15 @@ async function handleSearch(event) {
   fetchMoreBtn.disabled = true; 
 
   try {
+    page = 1; 
     const data = await fetchPhotos(query, page, limit);
     renderPhotos(data);
     totalPages = Math.ceil(data.totalHits / limit); 
-    page = 1;
     lastQuery = query;
     if (data.hits.length === 0) {
       fetchMoreBtn.style.display = "none";
     } else {
-      fetchMoreBtn.style.display = "block";
+      fetchMoreBtn.style.display = data.hits.length < limit ? "none" : "block"; 
     }
     afterRender();
   } catch (error) {
@@ -115,11 +115,18 @@ async function fetchPhotos(query, page, limit) {
 
   try {
     const response = await axios.get(url);
+    if (!response.status === 200) { 
+      throw new Error(response.statusText);
+    }
     return response.data;
   } catch (error) {
-    throw new Error('Failed to fetch photos');
+    console.error('Failed to fetch photos:', error);
+    onFetchError(error);
+    throw error;
   }
 }
+
+
 
 function renderPhotos(data) {
   const photos = data.hits || [];
@@ -193,5 +200,3 @@ function showEndMessage() {
     message: "We're sorry, but you've reached the end of search results."
   });
 }
-
-

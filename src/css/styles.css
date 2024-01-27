@@ -169,3 +169,7 @@
 .error-svg {
   background-image: url(../img/error.svg);
 }
+
+.btn-more-primary:disabled {
+  background-color: #808080;
+}
